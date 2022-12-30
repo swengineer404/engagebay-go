@@ -4,10 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
+)
+
+const (
+	ContentTypeJson = "application/json"
+	ContentTypeForm = "application/x-www-form-urlencoded"
 )
 
 type restClient struct {
@@ -24,18 +30,27 @@ func newAPIClient(key string) *restClient {
 	}
 }
 
-func (c *restClient) do(path, method string, payload, out any) error {
+func (c *restClient) do(path, method, contentType string, payload, out any) error {
 	var r io.Reader
 	if payload != nil {
-		b, _ := json.Marshal(payload)
-		r = bytes.NewReader(b)
+		switch contentType {
+		case ContentTypeJson:
+			b, _ := json.Marshal(payload)
+			r = bytes.NewReader(b)
+		case ContentTypeForm:
+		default:
+			return fmt.Errorf("invalid content type: %s", contentType)
+		}
+
 	}
 
 	req, err := http.NewRequest(method, c.baseURL+path, r)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "*/*")
+	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("Authorization", c.key)
 
 	res, err := c.c.Do(req)
 	if err != nil {
@@ -46,15 +61,14 @@ func (c *restClient) do(path, method string, payload, out any) error {
 	if res.StatusCode >= 400 && res.StatusCode <= 599 {
 		var apierr APIError
 
-		if err := json.NewDecoder(res.Body).Decode(&apierr); err != nil {
-			// Assume raw text error, because the developers at engagebay are fucking idiots.
-			var idiotErr *json.SyntaxError
-			if !errors.As(err, &idiotErr) {
-				return err
-			}
+		b, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
 
-			b, err := ioutil.ReadAll(res.Body)
-			if err != nil {
+		if err := json.Unmarshal(b, out); err != nil {
+			var fallbackErr *json.SyntaxError
+			if !errors.As(err, &fallbackErr) {
 				return err
 			}
 

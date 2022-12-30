@@ -1,5 +1,7 @@
 package engagebay
 
+import "net/http"
+
 type API struct {
 	client *restClient
 }
@@ -11,5 +13,5 @@ func New(key string) *API {
 }
 
 func (a *API) CreateContact(params *CreateContactParams) (c *Contact, err error) {
-	return c, a.client.do("/subscribers/subscriber", "POST", params, c)
+	return c, a.client.do("/subscribers/subscriber", http.MethodPost, ContentTypeJson, params, c)
 }

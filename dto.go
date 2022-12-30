@@ -1,5 +1,9 @@
 package engagebay
 
+const (
+	PropertyTypeText = "TEXT"
+)
+
 type Contact struct {
 	ID    int    `json:"id"`
 	Email string `json:"email"`
@@ -17,7 +21,20 @@ type Property struct {
 }
 
 type CreateContactParams struct {
-	Properties []Property `json:"properties"`
+	Properties []Property `json:"properties,omitempty"`
+	Tags       []string   `json:"tags,omitempty"`
+}
+
+func (p *CreateContactParams) SetName(name string) {
+	p.AddProperty("name", name, "SYSTEM")
+}
+
+func (p *CreateContactParams) SetEmail(email string) {
+	p.AddProperty("email", email, "SYSTEM")
+}
+
+func (p *CreateContactParams) AddTags(tags ...string) {
+	p.Tags = append(p.Tags, tags...)
 }
 
 func (p *CreateContactParams) AddProperty(name, value, propType string) {
