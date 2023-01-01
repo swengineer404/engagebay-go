@@ -48,9 +48,13 @@ func (c *restClient) do(path, method, contentType string, payload, out any) erro
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Accept", "*/*")
-	req.Header.Set("Content-Type", contentType)
+
+	if r != nil {
+		req.Header.Set("Content-Type", contentType)
+	}
+
 	req.Header.Set("Authorization", c.key)
+	req.Header.Set("Accept", "application/json")
 
 	res, err := c.c.Do(req)
 	if err != nil {
@@ -78,6 +82,11 @@ func (c *restClient) do(path, method, contentType string, payload, out any) erro
 		apierr.Code = res.StatusCode
 
 		return &apierr
+	}
+
+	if out == nil {
+		_, err := io.Copy(ioutil.Discard, res.Body)
+		return err
 	}
 
 	return json.NewDecoder(res.Body).Decode(out)

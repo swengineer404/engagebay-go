@@ -11,7 +11,19 @@ type Contact struct {
 
 type Tag struct {
 	Value     string `json:"tag"`
-	CreatedAt int    `json:"assigned_time"`
+	CreatedAt int    `json:"assigned_time,omitempty"`
+}
+
+type Tags []Tag
+
+func (t Tags) Contains(tagName string) bool {
+	for _, tag := range t {
+		if tag.Value == tagName {
+			return true
+		}
+	}
+
+	return false
 }
 
 type Property struct {
@@ -43,4 +55,9 @@ func (p *CreateContactParams) AddProperty(name, value, propType string) {
 		Value: value,
 		Type:  propType,
 	})
+}
+
+type AddContactTagsParams struct {
+	ID   int
+	Tags []Tag
 }
