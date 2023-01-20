@@ -25,6 +25,11 @@ func (a *API) GetContact(id int) (*Contact, error) {
 	return &c, a.client.do(fmt.Sprintf("/subscribers/%d", id), http.MethodGet, "", nil, &c)
 }
 
+func (a *API) GetContactByEmail(email string) (*Contact, error) {
+	var c Contact
+	return &c, a.client.do(fmt.Sprintf("/subscribers/contact-by-email/%s", email), http.MethodGet, "", nil, &c)
+}
+
 func (a *API) GetContactTags(id int) (tags Tags, err error) {
 	return tags, a.client.do(fmt.Sprintf("/subscribers/get-tags-by-id/%d", id), http.MethodGet, "", nil, &tags)
 }
