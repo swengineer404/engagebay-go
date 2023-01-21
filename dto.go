@@ -7,6 +7,7 @@ const (
 type Contact struct {
 	ID    int    `json:"id"`
 	Email string `json:"email"`
+	Tags  Tags   `json:"tags"`
 }
 
 type Tag struct {
