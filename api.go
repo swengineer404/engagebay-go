@@ -34,6 +34,14 @@ func (a *API) GetContactTags(id int) (tags Tags, err error) {
 	return tags, a.client.do(fmt.Sprintf("/subscribers/get-tags-by-id/%d", id), http.MethodGet, "", nil, &tags)
 }
 
-func (a *API) AddContactTags(params *AddContactTagsParams) error {
-	return a.client.do(fmt.Sprintf("/subscribers/contact/tags/add2/%d", params.ID), http.MethodPost, ContentTypeJson, params.Tags, nil)
+func (a *API) AddContactTags(id int, tags ...string) error {
+	var t Tags
+	t.Add(tags...)
+	return a.client.do(fmt.Sprintf("/subscribers/contact/tags/add2/%d", id), http.MethodPost, ContentTypeJson, t, nil)
+}
+
+func (a *API) DeleteContactTags(id int, tags ...string) error {
+	var t Tags
+	t.Add(tags...)
+	return a.client.do(fmt.Sprintf("/subscribers/contact/tags/delete/%d", id), http.MethodPost, ContentTypeJson, t, nil)
 }

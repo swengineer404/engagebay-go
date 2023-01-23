@@ -27,6 +27,14 @@ func (t Tags) Contains(tagName string) bool {
 	return false
 }
 
+func (t *Tags) Add(values ...string) {
+	for _, v := range values {
+		*t = append(*t, Tag{
+			Value: v,
+		})
+	}
+}
+
 type Property struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`

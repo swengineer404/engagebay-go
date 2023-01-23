@@ -3,11 +3,12 @@ package engagebay
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 )
 
@@ -38,6 +39,7 @@ func (c *restClient) do(path, method, contentType string, payload, out any) erro
 			b, _ := json.Marshal(payload)
 			r = bytes.NewReader(b)
 		case ContentTypeForm:
+			r = strings.NewReader(payload.(url.Values).Encode())
 		default:
 			return fmt.Errorf("invalid content type: %s", contentType)
 		}
@@ -62,20 +64,14 @@ func (c *restClient) do(path, method, contentType string, payload, out any) erro
 	}
 	defer res.Body.Close()
 
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
 	if res.StatusCode >= 400 && res.StatusCode <= 599 {
 		var apierr APIError
-
-		b, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-
 		if err := json.Unmarshal(b, out); err != nil {
-			var fallbackErr *json.SyntaxError
-			if !errors.As(err, &fallbackErr) {
-				return err
-			}
-
 			apierr.Message = string(b)
 		}
 
@@ -85,9 +81,15 @@ func (c *restClient) do(path, method, contentType string, payload, out any) erro
 	}
 
 	if out == nil {
-		_, err := io.Copy(ioutil.Discard, res.Body)
-		return err
+		return nil
 	}
 
-	return json.NewDecoder(res.Body).Decode(out)
+	if err := json.Unmarshal(b, out); err != nil {
+		return &APIError{
+			Message: string(b),
+			Code:    res.StatusCode,
+		}
+	}
+
+	return nil
 }
